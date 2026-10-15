@@ -1,4 +1,4 @@
-name: Update flight links
+name: Update flight preferences
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Replace static flight prices with Google Flights links
+      - name: Mark all listed flight options as preferred
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -21,31 +21,33 @@ jobs:
 
           p = Path('index.html')
           s = p.read_text()
-          url = 'https://www.google.com/travel/flights?hl=en&curr=USD&q=Flights%20from%20ORD%20to%20BCN%20on%20May%2010%202027%20returning%20May%2014%202027'
 
-          s = s.replace(
-              'Prices are round-trip Economy planning estimates and can change.',
-              'Use the live Google Flights links below to check current fares and availability.'
-          )
-          s = s.replace('<span>Economy</span></div>', '<span>Live fares</span></div>')
+          # Only change flight cards that do not already have the Preferred badge.
+          def make_preferred(match):
+              block = match.group(0)
+              if 'tag--pref' in block:
+                  return block
+              block = block.replace('class="flight"', 'class="flight is-preferred"', 1)
+              block = re.sub(
+                  r'<p class="flight__tags">',
+                  '<p class="flight__tags"><span class="tag tag--pref"><span aria-hidden="true">★</span> Preferred</span>',
+                  block,
+                  count=1,
+              )
+              # Remove the old plain-star badge if present so we do not show two stars.
+              block = re.sub(r'<span class="tag tag--star">.*?</span>', '', block, count=1)
+              return block
 
-          replacement = (
-              '<p class="flight__price">'
-              f'<a class="textlink" href="{url}" target="_blank" rel="noopener noreferrer">'
-              'Check live fares <span class="sr">on Google Flights (opens in a new tab)</span>'
-              '</a></p>'
-          )
-          s = re.sub(r'<p class="flight__price">.*?</p>', replacement, s)
-          s = s.replace(
-              'Pricing checked October 2026. Flight schedules and fares can change. Always confirm details before booking.',
-              'Flight schedules and availability can change. Always confirm details before booking.'
-          )
-          p.write_text(s)
+          flights_start = s.index('<!-- ================= FLIGHTS ================= -->')
+          flights_end = s.index('</section>', flights_start) + len('</section>')
+          before, flights, after = s[:flights_start], s[flights_start:flights_end], s[flights_end:]
+          flights = re.sub(r'<li class="flight(?: is-preferred)?">.*?</li>', make_preferred, flights, flags=re.S)
+          p.write_text(before + flights + after)
           PY
       - name: Commit update
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Replace flight prices with live Google Flights links"
+          git diff --cached --quiet || git commit -m "Mark all flight options as preferred"
           git push
