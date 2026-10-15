@@ -22,80 +22,76 @@ jobs:
           s = p.read_text()
 
           marker = '/* ===== Olive design pass ===== */'
-          css = '''
-/* ===== Olive design pass ===== */
-:root {
-  --olive-deep: #5F6338;
-  --olive: #73794A;
-  --olive-soft: #D9DDC3;
-  --olive-wash: #F1F2E7;
-}
+          css = """
+          /* ===== Olive design pass ===== */
+          :root {
+            --olive-deep: #5F6338;
+            --olive: #73794A;
+            --olive-soft: #D9DDC3;
+            --olive-wash: #F1F2E7;
+          }
 
-/* Keep burgundy as the primary accent; olive acts as a refined secondary. */
-.tile__desc,
-.leg__label,
-.event__date,
-.sub,
-.acc__note,
-.note,
-.note--tight,
-.flights__head,
-dt {
-  color: var(--olive-deep);
-}
+          .tile__desc,
+          .leg__label,
+          .event__date,
+          .sub,
+          .acc__note,
+          .note,
+          .note--tight,
+          .flights__head,
+          dt {
+            color: var(--olive-deep);
+          }
 
-.tile,
-.acc,
-.note-card,
-.flight,
-.event {
-  border-color: color-mix(in srgb, var(--olive) 28%, #ead1bd);
-}
+          .tile,
+          .acc,
+          .note-card,
+          .flight,
+          .event {
+            border-color: #D8D9C3;
+          }
 
-.tile:hover,
-.tile:focus-visible,
-.acc[open] {
-  border-color: var(--olive);
-}
+          .tile:hover,
+          .tile:focus-visible,
+          .acc[open] {
+            border-color: var(--olive);
+          }
 
-.tag:not(.tag--pref),
-.pill,
-.swatches .sw {
-  background: var(--olive-wash);
-  border-color: var(--olive-soft);
-}
+          .tag:not(.tag--pref),
+          .pill,
+          .swatches .sw {
+            background: var(--olive-wash);
+            border-color: var(--olive-soft);
+          }
 
-.tag--soft {
-  color: var(--olive-deep);
-  background: var(--olive-soft);
-}
+          .tag--soft {
+            color: var(--olive-deep);
+            background: var(--olive-soft);
+          }
 
-.note-card {
-  background: linear-gradient(180deg, rgba(241,242,231,.76), rgba(255,250,246,.96));
-}
+          .note-card {
+            background: linear-gradient(180deg, rgba(241,242,231,.76), rgba(255,250,246,.96));
+          }
 
-blockquote.quote {
-  border-left-color: var(--olive);
-  background: rgba(241,242,231,.55);
-}
+          blockquote.quote {
+            border-left-color: var(--olive);
+            background: rgba(241,242,231,.55);
+          }
 
-.viewnav .btn--ghost,
-.btn--ghost {
-  border-color: var(--olive);
-  color: var(--olive-deep);
-}
+          .viewnav .btn--ghost,
+          .btn--ghost {
+            border-color: var(--olive);
+            color: var(--olive-deep);
+          }
 
-.viewnav .btn--ghost:hover,
-.viewnav .btn--ghost:focus-visible,
-.btn--ghost:hover,
-.btn--ghost:focus-visible {
-  background: var(--olive-wash);
-}
-
-.tile-band {
-  opacity: .94;
-}
-'''
+          .viewnav .btn--ghost:hover,
+          .viewnav .btn--ghost:focus-visible,
+          .btn--ghost:hover,
+          .btn--ghost:focus-visible {
+            background: var(--olive-wash);
+          }
+          """
+          css = '\n'.join(line[10:] if line.startswith('          ') else line for line in css.splitlines())
 
           if marker in s:
               raise SystemExit('Olive design pass already exists')
