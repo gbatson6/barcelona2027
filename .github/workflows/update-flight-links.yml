@@ -1,4 +1,4 @@
-name: Restore flight preferences
+name: Update preferred flight badges
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Restore original preferred and starred flight badges
+      - name: Set selected preferred flight badges
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -38,12 +38,11 @@ jobs:
               occurrence = seen[airline]
 
               preferred = (
-                  airline in {'United', 'American', 'KLM'} or
+                  airline in {'United', 'American', 'KLM', 'Lufthansa', 'British Airways'} or
                   (airline == 'SWISS' and occurrence == 1)
               )
-              starred = airline in {'Lufthansa', 'British Airways'}
 
-              # Reset card style and badges first.
+              # Reset card style and old badges first.
               block = block.replace('class="flight is-preferred"', 'class="flight"', 1)
               block = re.sub(r'<span class="tag tag--pref"><span aria-hidden="true">★</span> Preferred</span>', '', block)
               block = re.sub(r'<span class="tag tag--star"><span aria-hidden="true">★</span><span class="sr">Starred option</span></span>', '', block)
@@ -53,12 +52,6 @@ jobs:
                   block = block.replace(
                       '<p class="flight__tags">',
                       '<p class="flight__tags"><span class="tag tag--pref"><span aria-hidden="true">★</span> Preferred</span>',
-                      1,
-                  )
-              elif starred:
-                  block = block.replace(
-                      '<p class="flight__tags">',
-                      '<p class="flight__tags"><span class="tag tag--star"><span aria-hidden="true">★</span><span class="sr">Starred option</span></span>',
                       1,
                   )
               return block
@@ -71,5 +64,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Restore original flight preferences"
+          git diff --cached --quiet || git commit -m "Mark Lufthansa and British Airways preferred"
           git push
