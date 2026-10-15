@@ -479,7 +479,75 @@ body[data-view="home"] .topbar { display: none; }
   .price__tier { display: none; }
 }
 
-  </style>
+  
+/* ===== Olive design pass ===== */
+:root {
+  --olive-deep: #5F6338;
+  --olive: #73794A;
+  --olive-soft: #D9DDC3;
+  --olive-wash: #F1F2E7;
+}
+
+.tile__desc,
+.leg__label,
+.event__date,
+.sub,
+.acc__note,
+.note,
+.note--tight,
+.flights__head,
+dt {
+  color: var(--olive-deep);
+}
+
+.tile,
+.acc,
+.note-card,
+.flight,
+.event {
+  border-color: #D8D9C3;
+}
+
+.tile:hover,
+.tile:focus-visible,
+.acc[open] {
+  border-color: var(--olive);
+}
+
+.tag:not(.tag--pref),
+.pill,
+.swatches .sw {
+  background: var(--olive-wash);
+  border-color: var(--olive-soft);
+}
+
+.tag--soft {
+  color: var(--olive-deep);
+  background: var(--olive-soft);
+}
+
+.note-card {
+  background: linear-gradient(180deg, rgba(241,242,231,.76), rgba(255,250,246,.96));
+}
+
+blockquote.quote {
+  border-left-color: var(--olive);
+  background: rgba(241,242,231,.55);
+}
+
+.viewnav .btn--ghost,
+.btn--ghost {
+  border-color: var(--olive);
+  color: var(--olive-deep);
+}
+
+.viewnav .btn--ghost:hover,
+.viewnav .btn--ghost:focus-visible,
+.btn--ghost:hover,
+.btn--ghost:focus-visible {
+  background: var(--olive-wash);
+}
+</style>
 </head>
 <body data-view="home">
   <a class="skip" href="#main">Skip to content</a>
