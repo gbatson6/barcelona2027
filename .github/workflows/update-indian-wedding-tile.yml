@@ -1,4 +1,4 @@
-name: Update Indian wedding tile
+name: Remove Indian wedding section
 
 on:
   push:
@@ -13,21 +13,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Update home tile and section label
+      - name: Remove home tile and Indian wedding section
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           p = Path('index.html')
           s = p.read_text()
 
-          old_tile = '<li><a class="tile" href="#schedule"><span><span class="tile__title">Schedule</span><span class="tile__desc">What’s happening, and where</span></span><i class="arr" aria-hidden="true"></i></a></li>'
-          new_tile = '<li><a class="tile" href="#schedule"><span><span class="tile__title">Indian Wedding</span><span class="tile__desc">A quick guide to the traditions you’ll experience</span></span><i class="arr" aria-hidden="true"></i></a></li>'
+          # Remove the Indian Wedding tile from the home page.
+          s, tile_count = re.subn(
+              r'\s*<li><a class="tile" href="#schedule">.*?<span class="tile__title">Indian Wedding</span>.*?</a></li>',
+              '',
+              s,
+              count=1,
+              flags=re.S,
+          )
 
-          if old_tile not in s:
-              raise SystemExit('Could not find the Schedule home tile')
-          s = s.replace(old_tile, new_tile, 1)
-          s = s.replace('id="schedule" data-title="Schedule"', 'id="schedule" data-title="Indian Wedding"', 1)
+          # Remove the full Indian wedding section.
+          s, section_count = re.subn(
+              r'\s*<!-- ================= SCHEDULE ================= -->\s*<section class="view" id="schedule".*?</section>',
+              '',
+              s,
+              count=1,
+              flags=re.S,
+          )
+
+          if tile_count != 1:
+              raise SystemExit(f'Expected to remove 1 Indian Wedding tile, removed {tile_count}')
+          if section_count != 1:
+              raise SystemExit(f'Expected to remove 1 Indian Wedding section, removed {section_count}')
+
           p.write_text(s)
           PY
       - name: Commit changes
@@ -35,5 +52,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Rename schedule tile to Indian Wedding"
+          git diff --cached --quiet || git commit -m "Remove Indian wedding section"
           git push
