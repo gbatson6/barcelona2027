@@ -3,7 +3,7 @@ name: Update Indian wedding overview
 on:
   push:
     paths:
-      - .github/workflows/update-flight-links.yml
+      - '.github/workflows/update-flight-links.yml'
 
 permissions:
   contents: write
@@ -13,38 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Replace schedule section with Indian wedding overview
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import re
-
-          p = Path('index.html')
-          s = p.read_text()
-
-          replacement = '''<section class="view" id="schedule" data-title="Schedule" aria-labelledby="h-schedule">
-      <div class="wrap">
-        <h2 id="h-schedule" tabindex="-1">A little about Indian weddings</h2>
-        <p class="lead">Indian weddings are often celebrated over several events, with each one carrying its own meaning and traditions. Here’s a quick overview of a few traditions you’ll experience during our wedding weekend.</p>
-
-        <h3 class="sub">Haldi</h3>
-        <p>Haldi is a pre-wedding tradition where turmeric paste is applied to the bride and groom. It symbolizes blessings, good luck, and the start of the wedding celebrations.</p>
-
-        <h3 class="sub">Sangeet</h3>
-        <p>Sangeet is a celebration centered around music and dance. It brings both families and friends together before the wedding for performances, dancing, and celebration.</p>
-
-        <h3 class="sub">Wedding ceremony</h3>
-        <p>The wedding ceremony includes a series of traditional rituals that represent the couple’s commitment to one another and the joining of two families. We’ll be incorporating several Indian traditions throughout the ceremony, and we’ll make sure guests can follow along and understand what’s happening.</p>
-      </div>
-    </section>'''
-
-          pattern = re.compile(r'<section class="view" id="schedule".*?</section>', re.S)
-          new_s, count = pattern.subn(replacement, s, count=1)
-          if count != 1:
-              raise SystemExit(f'Expected to replace 1 schedule section, replaced {count}')
-          p.write_text(new_s)
-          PY
-      - name: Commit update
+      - name: Update schedule section
+        run: python .github/scripts/update_schedule.py
+      - name: Commit changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
