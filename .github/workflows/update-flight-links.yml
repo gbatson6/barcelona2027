@@ -1,4 +1,4 @@
-name: Update preferred flight badges
+name: Update Indian wedding overview
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set selected preferred flight badges
+      - name: Replace schedule section with Indian wedding overview
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -22,47 +22,32 @@ jobs:
           p = Path('index.html')
           s = p.read_text()
 
-          flights_start = s.index('<!-- ================= FLIGHTS ================= -->')
-          flights_end = s.index('</section>', flights_start) + len('</section>')
-          before, flights, after = s[:flights_start], s[flights_start:flights_end], s[flights_end:]
+          replacement = '''<section class="view" id="schedule" data-title="Schedule" aria-labelledby="h-schedule">
+      <div class="wrap">
+        <h2 id="h-schedule" tabindex="-1">A little about Indian weddings</h2>
+        <p class="lead">Indian weddings are often celebrated over several events, with each one carrying its own meaning and traditions. Here’s a quick overview of a few traditions you’ll experience during our wedding weekend.</p>
 
-          seen = {}
+        <h3 class="sub">Haldi</h3>
+        <p>Haldi is a pre-wedding tradition where turmeric paste is applied to the bride and groom. It symbolizes blessings, good luck, and the start of the wedding celebrations.</p>
 
-          def restore(match):
-              block = match.group(0)
-              m = re.search(r'<h4 class="flight__airline">(.*?)</h4>', block)
-              if not m:
-                  return block
-              airline = re.sub('<.*?>', '', m.group(1)).strip()
-              seen[airline] = seen.get(airline, 0) + 1
-              occurrence = seen[airline]
+        <h3 class="sub">Sangeet</h3>
+        <p>Sangeet is a celebration centered around music and dance. It brings both families and friends together before the wedding for performances, dancing, and celebration.</p>
 
-              preferred = (
-                  airline in {'United', 'American', 'KLM', 'Lufthansa', 'British Airways'} or
-                  (airline == 'SWISS' and occurrence == 1)
-              )
+        <h3 class="sub">Wedding ceremony</h3>
+        <p>The wedding ceremony includes a series of traditional rituals that represent the couple’s commitment to one another and the joining of two families. We’ll be incorporating several Indian traditions throughout the ceremony, and we’ll make sure guests can follow along and understand what’s happening.</p>
+      </div>
+    </section>'''
 
-              # Reset card style and old badges first.
-              block = block.replace('class="flight is-preferred"', 'class="flight"', 1)
-              block = re.sub(r'<span class="tag tag--pref"><span aria-hidden="true">★</span> Preferred</span>', '', block)
-              block = re.sub(r'<span class="tag tag--star"><span aria-hidden="true">★</span><span class="sr">Starred option</span></span>', '', block)
-
-              if preferred:
-                  block = block.replace('class="flight"', 'class="flight is-preferred"', 1)
-                  block = block.replace(
-                      '<p class="flight__tags">',
-                      '<p class="flight__tags"><span class="tag tag--pref"><span aria-hidden="true">★</span> Preferred</span>',
-                      1,
-                  )
-              return block
-
-          flights = re.sub(r'<li class="flight(?: is-preferred)?">.*?</li>', restore, flights, flags=re.S)
-          p.write_text(before + flights + after)
+          pattern = re.compile(r'<section class="view" id="schedule".*?</section>', re.S)
+          new_s, count = pattern.subn(replacement, s, count=1)
+          if count != 1:
+              raise SystemExit(f'Expected to replace 1 schedule section, replaced {count}')
+          p.write_text(new_s)
           PY
       - name: Commit update
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Mark Lufthansa and British Airways preferred"
+          git diff --cached --quiet || git commit -m "Replace schedule with Indian wedding overview"
           git push
