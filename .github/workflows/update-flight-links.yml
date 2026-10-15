@@ -1,4 +1,4 @@
-name: Update flight preferences
+name: Restore flight preferences
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Mark all listed flight options as preferred
+      - name: Restore original preferred and starred flight badges
         run: |
           python - <<'PY'
           from pathlib import Path
@@ -22,26 +22,48 @@ jobs:
           p = Path('index.html')
           s = p.read_text()
 
-          # Only change flight cards that do not already have the Preferred badge.
-          def make_preferred(match):
-              block = match.group(0)
-              if 'tag--pref' in block:
-                  return block
-              block = block.replace('class="flight"', 'class="flight is-preferred"', 1)
-              block = re.sub(
-                  r'<p class="flight__tags">',
-                  '<p class="flight__tags"><span class="tag tag--pref"><span aria-hidden="true">★</span> Preferred</span>',
-                  block,
-                  count=1,
-              )
-              # Remove the old plain-star badge if present so we do not show two stars.
-              block = re.sub(r'<span class="tag tag--star">.*?</span>', '', block, count=1)
-              return block
-
           flights_start = s.index('<!-- ================= FLIGHTS ================= -->')
           flights_end = s.index('</section>', flights_start) + len('</section>')
           before, flights, after = s[:flights_start], s[flights_start:flights_end], s[flights_end:]
-          flights = re.sub(r'<li class="flight(?: is-preferred)?">.*?</li>', make_preferred, flights, flags=re.S)
+
+          seen = {}
+
+          def restore(match):
+              block = match.group(0)
+              m = re.search(r'<h4 class="flight__airline">(.*?)</h4>', block)
+              if not m:
+                  return block
+              airline = re.sub('<.*?>', '', m.group(1)).strip()
+              seen[airline] = seen.get(airline, 0) + 1
+              occurrence = seen[airline]
+
+              preferred = (
+                  airline in {'United', 'American', 'KLM'} or
+                  (airline == 'SWISS' and occurrence == 1)
+              )
+              starred = airline in {'Lufthansa', 'British Airways'}
+
+              # Reset card style and badges first.
+              block = block.replace('class="flight is-preferred"', 'class="flight"', 1)
+              block = re.sub(r'<span class="tag tag--pref"><span aria-hidden="true">★</span> Preferred</span>', '', block)
+              block = re.sub(r'<span class="tag tag--star"><span aria-hidden="true">★</span><span class="sr">Starred option</span></span>', '', block)
+
+              if preferred:
+                  block = block.replace('class="flight"', 'class="flight is-preferred"', 1)
+                  block = block.replace(
+                      '<p class="flight__tags">',
+                      '<p class="flight__tags"><span class="tag tag--pref"><span aria-hidden="true">★</span> Preferred</span>',
+                      1,
+                  )
+              elif starred:
+                  block = block.replace(
+                      '<p class="flight__tags">',
+                      '<p class="flight__tags"><span class="tag tag--star"><span aria-hidden="true">★</span><span class="sr">Starred option</span></span>',
+                      1,
+                  )
+              return block
+
+          flights = re.sub(r'<li class="flight(?: is-preferred)?">.*?</li>', restore, flights, flags=re.S)
           p.write_text(before + flights + after)
           PY
       - name: Commit update
@@ -49,5 +71,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Mark all flight options as preferred"
+          git diff --cached --quiet || git commit -m "Restore original flight preferences"
           git push
