@@ -1,0 +1,39 @@
+name: Remove floral bands
+
+on:
+  push:
+    paths:
+      - .github/workflows/remove-floral-bands.yml
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hide floral bands
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text()
+
+          old = ".tile-band {\n  height: 18px;"
+          new = ".tile-band {\n  display: none;\n  height: 18px;"
+
+          if old not in s:
+              raise SystemExit('Could not find tile-band CSS')
+
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Remove floral bands"
+          git push
